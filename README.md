@@ -1,6 +1,6 @@
 
 <h1 align="center">
-  <img alt="AbiTeX logo" height="100" src="./logo.png" />
+  <img alt="AbiTeX logo" height="100" src="./public/logo.png" />
   <div>AbiTeX</div>
 </h1>
 
@@ -10,11 +10,7 @@ AbiTeX is a modern, open-source scientific calculator based on the original Abic
 <b>Supports fractions, roots, and advanced math via LaTeX syntax.</b>
 <br />
 Built for personal and general scientific use.
-</div>
-
-<div align="center">
-<img alt="AbiTeX screenshot" width="375" src="./app-screenshot.png" />
-</div>
+</div
 
 ---
 
