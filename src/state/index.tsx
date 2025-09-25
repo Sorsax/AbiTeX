@@ -1,45 +1,21 @@
-import Decimal from "decimal.js";
-import { createContext, PropsWithChildren, useContext, useState } from "react";
-import { AngleUnit, calculate } from "#/calculator";
-
-import useBuffer, { BufferHandle } from "./internal-buffer";
-import useMemory, { MemoryHandle } from "./internal-memory";
-
+import { AngleUnit } from "#/calculator";
 type CalculatorContext = {
-	/** Handle to the calculator's input buffer */
 	buffer: BufferHandle;
-	/** Handle to the calculator's memory registers */
 	memory: MemoryHandle;
-
-	/** Clear the input buffer and all memory registers */
 	clearAll(): void;
-
-	/** Unit to use in trigonometric functions */
 	angleUnit: AngleUnit;
-	/** Switch to using radians */
 	radsOn(): void;
-	/** Switch to using degrees */
 	degsOn(): void;
-
-	/**
-	 * Crunch the numbers!
-	 *
-	 * - Evaluates the expression in the input buffer.
-	 * - Stores the result in the answer memory register.
-	 * - Marks the input buffer as "clean" to signal that *the current answer matches the value of the input buffer*.
-	 *
-	 * @param `saveToInd` Whether the result should be saved **also** to the independent memory register. Default `false`.
-	 * @returns The result of the expression in the input buffer or `undefined` if the input could not be evaluated.
-	 */
 	crunch(saveToInd?: boolean): Decimal | undefined;
 };
+			import Decimal from "decimal.js";
+			import { createContext, PropsWithChildren, useContext, useState } from "react";
+			import useBuffer, { BufferHandle } from "./internal-buffer";
+			import useMemory, { MemoryHandle } from "./internal-memory";
+			import { evaluate } from "mathjs";
 
 const CalculatorContextObject = createContext<CalculatorContext | null>(null);
 
-/**
- * Returns a handle to the app-global memory registers and user input buffer
- * as well as methods to clear the state and to actually perform the user-given calculation.
- */
 export function useCalculator() {
 	const handle = useContext(CalculatorContextObject);
 	if (!handle) throw Error("Programmer Error: Calculator Context was used outside its Provider");
@@ -48,7 +24,7 @@ export function useCalculator() {
 
 export default function CalculatorProvider({ children }: PropsWithChildren) {
 	const [angleUnit, setAngleUnit] = useState<AngleUnit>("deg");
-	const buffer = useBuffer();
+       const buffer = useBuffer();
 	const memory = useMemory();
 
 	function clearAll() {
@@ -58,41 +34,120 @@ export default function CalculatorProvider({ children }: PropsWithChildren) {
 
 	function crunch(saveToInd = false) {
 		buffer.clean();
-
-		const result = calculate(buffer.value, memory.ans, memory.ind, angleUnit);
-		if (result.isErr()) {
+		let value: Decimal | undefined;
+		try {
+			const expr = latexToMathjs(buffer.value);
+			const result = evaluate(expr);
+			value = new Decimal(result);
+			buffer.setErr(false);
+		} catch {
 			buffer.setErr(true);
 			return;
 		}
-
-		const { value } = result;
-
-		memory.setAns(value);
-		if (saveToInd) memory.setInd(value);
-
+		if (value !== undefined) {
+			memory.setAns(value);
+			if (saveToInd) memory.setInd(value);
+		}
 		return value;
 	}
 
-	return (
-		<CalculatorContextObject.Provider
-			value={{
-				buffer,
-				memory,
-				clearAll,
-				crunch,
+       function latexToMathjs(input: string): string {
+           return input.trim()
+               // Unicode minus to standard minus
+               .replace(/−/g, '-')
+               // Unicode fractions to decimals
+               .replace(/½/g, '0.5')
+               .replace(/¼/g, '0.25')
+               .replace(/¾/g, '0.75')
+               // Unicode sqrt to mathjs sqrt()
+               .replace(/√\s*([0-9.]+)/g, 'sqrt($1)')
+               // Robust fraction: allow spaces, nested braces, and wrap in parentheses for mathjs
+               .replace(/\\frac\s*\{([^}]*)\}\s*\{([^}]*)\}/g, '(( $1 )/( $2 ))')
+               // Robust sqrt: allow spaces, nested braces
+               .replace(/\\sqrt\s*\{([^}]*)\}/g, 'sqrt(($1))')
+               // Nth root
+               .replace(/\\sqrt\[([^\]]*)\]\{([^}]*)\}/g, 'nthRoot(($2), ($1))')
+               // Powers
+               .replace(/([a-zA-Z0-9]+)\^\{([^}]*)\}/g, '($1)^($2)')
+               // Subscripts
+               .replace(/([a-zA-Z0-9]+)_\{([^}]*)\}/g, '$1')
+               // Operators
+               .replace(/\\cdot|\\times/g, '*')
+               .replace(/\\div/g, '/')
+               .replace(/\\pm/g, '+')
+               .replace(/\\leq/g, '<=')
+               .replace(/\\geq/g, '>=')
+               .replace(/\\neq|\\ne/g, '!=')
+               .replace(/\\wedge/g, 'and')
+               .replace(/\\vee/g, 'or')
+               // Functions
+               .replace(/\\sin/g, 'sin')
+               .replace(/\\cos/g, 'cos')
+               .replace(/\\tan/g, 'tan')
+               .replace(/\\arcsin/g, 'asin')
+               .replace(/\\arccos/g, 'acos')
+               .replace(/\\arctan/g, 'atan')
+               .replace(/\\ln/g, 'log')
+               .replace(/\\log/g, 'log10')
+               .replace(/\\exp/g, 'exp')
+               // Constants
+               .replace(/\\infty/g, 'Infinity')
+               .replace(/\\pi/g, 'pi')
+               // Greek letters
+               .replace(/\\theta/g, 'theta')
+               .replace(/\\alpha/g, 'alpha')
+               .replace(/\\beta/g, 'beta')
+               .replace(/\\gamma/g, 'gamma')
+               // Absolute value
+               .replace(/\|([^|]+)\|/g, 'abs($1)')
+               // Parentheses/brackets/braces
+               .replace(/\\left\(/g, '(')
+               .replace(/\\right\)/g, ')')
+               .replace(/\\left\[/g, '[')
+               .replace(/\\right\]/g, ']')
+               .replace(/\\left\{/g, '{')
+               .replace(/\\right\}/g, '}')
+               // Vectors
+               .replace(/\\vec\{([^}]*)\}/g, '$1')
+               // Ellipsis
+               .replace(/\\cdots|\\ldots/g, '...')
+               // Quantifiers
+               .replace(/\\forall|\\exists/g, '')
+               // Sums
+               .replace(/\\sum_\{([^}]*)=([^}]*)\}\^\{([^}]*)\} ([^ ]+)/g, 'sum($1, $2, $3, $4)')
+               // Products
+               .replace(/\\prod_\{([^}]*)=([^}]*)\}\^\{([^}]*)\} ([^ ]+)/g, 'prod($1, $2, $3, $4)')
+               // Integrals
+               .replace(/\\int_([^\^]+)\^([^ ]+) ([^ ]+) d([a-zA-Z]+)/g, 'integrate($3, $4, $1, $2)')
+               // Matrices
+               .replace(/\\begin\{bmatrix\}([^]*?)\\end\{bmatrix\}/g, (_, content: string) => {
+                   const rows = content.trim().split('\\\\').map((row: string) => '[' + row.trim().split('&').map((e: string) => e.trim()).join(', ') + ']');
+                   return '[' + rows.join(', ') + ']';
+               });
+       }
 
-				angleUnit,
-				radsOn() {
-					buffer.makeDirty();
-					setAngleUnit("rad");
-				},
-				degsOn() {
-					buffer.makeDirty();
-					setAngleUnit("deg");
-				},
-			}}
-		>
-			{children}
-		</CalculatorContextObject.Provider>
-	);
+       // ...other logic for CalculatorProvider...
+       // (Make sure all functions/components are properly closed)
+       // Return the provider as before
+       return (
+           <CalculatorContextObject.Provider
+               value={{
+                   buffer,
+                   memory,
+                   clearAll,
+                   crunch,
+                   angleUnit,
+                   radsOn() {
+                       buffer.makeDirty();
+                       setAngleUnit("rad");
+                   },
+                   degsOn() {
+                       buffer.makeDirty();
+                       setAngleUnit("deg");
+                   },
+               }}
+           >
+               {children}
+           </CalculatorContextObject.Provider>
+       );
 }

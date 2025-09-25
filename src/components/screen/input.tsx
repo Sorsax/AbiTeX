@@ -5,14 +5,26 @@ import { match } from "ts-pattern";
 import { EXPR_DEBUG } from "#/error-boundary/constants";
 
 export default function Input() {
-	const { buffer, crunch, angleUnit, degsOn, radsOn } = useCalculator();
+	const { buffer, crunch, memory } = useCalculator();
 
 	const shouldShowOutput = !buffer.isDirty && !buffer.isErr;
 
-	function onChange(e: ChangeEvent<HTMLInputElement>) {
-		(window as any)[EXPR_DEBUG] = e.target.value;
-		buffer.set(e.target.value);
-	}
+       // Converts LaTeX patterns to Unicode equivalents (for display)
+       function latexToUnicode(input: string): string {
+	       input = input.replace(/\\frac\{1\}\{2\}/g, "½")
+		       .replace(/\\frac\{1\}\{4\}/g, "¼")
+		       .replace(/\\frac\{3\}\{4\}/g, "¾");
+	       input = input.replace(/\\sqrt\{([^}]*)\}/g, (_, n) => `√${n}`);
+	       return input;
+       }
+
+
+       function onChange(e: ChangeEvent<HTMLInputElement>) {
+	       let value = e.target.value;
+	       value = latexToUnicode(value);
+	       (window as any)[EXPR_DEBUG] = value;
+	       buffer.set(value);
+       }
 
 	function onKeyDown(e: KeyboardEvent<HTMLInputElement>) {
 		match(e.key)
@@ -37,9 +49,13 @@ export default function Input() {
 			.with("Escape", () => {
 				buffer.empty();
 			})
-			.with("Tab", () => {
-				angleUnit === "deg" ? radsOn() : degsOn();
-			})
+	       .with("Tab", () => {
+		       // After calculation, clear input and insert last answer
+		       buffer.empty();
+		       if (memory.ans) {
+			       buffer.set(memory.ans.toString());
+		       }
+	       })
 			.otherwise(() => true) || e.preventDefault();
 	}
 
@@ -62,30 +78,28 @@ export default function Input() {
 		[buffer.value],
 	);
 
-	return (
-		<input
-			type="text"
-			autoFocus
-			ref={buffer.ref}
-			value={buffer.value}
-			onChange={onChange}
-			onKeyDown={onKeyDown}
-			onBlur={onBlur}
-			x={[
-				"absolute bottom-0",
-				"w-full h-full",
-				"px-4 pt-14",
-				"bg-transparent",
-				"text-right",
-				"transition-all",
-				// Focus is shown by the parent so it's safe to disable here
-				"focus:outline-none",
-				shouldShowOutput ? "text-slate-500 text-sm" : "text-black",
-			]}
-			// Safari bug workaround:
-			// As of writing this, translating an input in safari without using `translate3d`
-			// can cause the content of the input to visually lag behind the container
-			style={{ transform: shouldShowOutput ? "translate3d(0, -2rem, 0)" : "translate3d(0, 0, 0)" }}
-		/>
-	);
+       return (
+	       <input
+		       type="text"
+		       autoFocus
+		       ref={buffer.ref}
+		       value={buffer.value}
+		       onChange={onChange}
+		       onKeyDown={onKeyDown}
+		       onBlur={onBlur}
+		       x={[
+			       "absolute bottom-0",
+			       "w-full h-full",
+			       "px-4 pt-14",
+			       "bg-transparent",
+			       "text-right",
+			       "transition-all",
+			       // Focus is shown by the parent so it's safe to disable here
+			       "focus:outline-none",
+			       shouldShowOutput ? "text-slate-500 text-sm" : "text-black",
+		       ]}
+		       style={{ transform: shouldShowOutput ? "translate3d(0, -2rem, 0)" : "translate3d(0, 0, 0)" }}
+		       placeholder={"Enter math or LaTeX (e.g. 1+2, \\frac{1}{2})"}
+	       />
+       );
 }

@@ -1,6 +1,6 @@
 import Decimal from "decimal.js";
 import { err, ok, Ok, Result } from "neverthrow";
-import { isMatching, match, P, Pattern } from "ts-pattern";
+import { match, P, Pattern } from "ts-pattern";
 
 import { AngleUnit } from "..";
 import { Token } from "./tokeniser";
@@ -67,7 +67,7 @@ export default function evaluate(tokens: Token[], ans: Decimal, ind: Decimal, an
 		const token = peek();
 
 		if (!token) return err("UNEXPECTED_EOF");
-		if (!isMatching(pattern, token)) return err("UNEXPECTED_TOKEN");
+	if (!match(token).with(pattern, () => true).otherwise(() => false)) return err("UNEXPECTED_TOKEN");
 
 		next();
 
