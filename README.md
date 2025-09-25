@@ -1,45 +1,35 @@
-[![Digabi logo](https://digabi.fi/images/digabi-logo.png)](https://digabi.fi)
 
-# Digabi
-
-Digabi is a codebase used in the Abitti exam system, the digital exam environment for the [Finnish Matriculation Examination](https://www.ylioppilastutkinto.fi/en).
-
-All bug reports, feature requests, and pull requests are appreciated. However, the following should be kept in mind:
-
-- Pull requests based on submitted issues cannot be implemented due to limited resources. Similarly, upstream issues related to third-party projects in use are not forwarded.
-- No guarantee can be given that submitted pull requests will be reviewed.
-- Our focus is strictly on the Finnish Matriculation Examination, as defined by law. Issues or pull requests unrelated to this mission will not be addressed.
-- Official channels should be used for inquiries. The issue tracker and pull requests are not to be used for general questions or support requests.
-
-Before any contribution is accepted to the codebase, to clarify the intellectual property rights associated with contributions to open-source projects owned by the Finnish Matriculation Examination Board, all contributors must sign and submit a Contribution License Agreement (CLA):
-
-- Individuals should sign and send the [Personal CLA](https://digabi.fi/YTL%20Personal%20CLA.pdf) to [digabi@ylioppilastutkinto.fi](mailto:digabi@ylioppilastutkinto.fi).
-- Organizations or corporations should sign and send the [Corporate CLA](https://digabi.fi/YTL%20Corporate%20CLA.pdf) to the same address.
-
----
-  
 <h1 align="center">
-  <img alt="logo" height="100" src="./app-icon.png" />
-  <div>Abicus</div>
+  <img alt="AbiTeX logo" height="100" src="./logo.png" />
+  <div>AbiTeX</div>
 </h1>
 
 <div align="center">
-  
-Abicus is a simple **scientific calculator** built on web technologies.
-
-Abicus does not include any symbolic computation capabilities.  
-It is built for use in the Finnish digital matriculation examinations.
-
+AbiTeX is a modern, open-source scientific calculator based on the original Abicus project, now with full LaTeX input and calculation support.
+<br />
+<b>Supports fractions, roots, and advanced math via LaTeX syntax.</b>
+<br />
+Built for personal and general scientific use.
 </div>
 
 <div align="center">
-<img alt="screenshot" width="375" src="./app-screenshot.png" />
+<img alt="AbiTeX screenshot" width="375" src="./app-screenshot.png" />
 </div>
 
-> [!NOTE]
-> The calculator was developed especially to be an example of an Abitti 2 application. The source code, the Abitti 2 container, and precompiled binaries of the calculator are made available to the public for demonstration purposes only. The matriculation examination board does not provide support for e.g. installing the precompiled binaries.
->
-> We request that any errors in the program are reported to Abitti-support (abitti@ylioppilastutkinto.fi)
+---
+
+## About AbiTeX
+
+AbiTeX is a fork of Abicus, enhanced to support LaTeX math input and calculation. You can enter expressions like `\frac{2}{3}-1`, `\sqrt{2}` etc, and AbiTeX will calculate them directly. AbiTeX automatically converts LaTeX to mathjs and/or decimals in backend.
+
+All the original Abicus features remain, with the addition of:
+- LaTeX input for fractions, roots, powers, and more
+- Unicode math symbol support (½, √, etc.)
+- Seamless workflow for chaining calculations
+
+AbiTeX is released under the MIT License. See below for original copyright.
+
+---
 
 <!--
 [Installation]() ⋅

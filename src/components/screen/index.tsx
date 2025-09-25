@@ -4,7 +4,7 @@ import RadDegToggle from "./rad-deg-toggle";
 import Result from "./result";
 import ErrorIcon from "./error-icon";
 
-export default function Screen({ latexMode }: { latexMode: boolean }) {
+export default function Screen() {
        return (
 	       <>
 		       <div
@@ -17,7 +17,7 @@ export default function Screen({ latexMode }: { latexMode: boolean }) {
 				       "has-[:focus]:ring-2 ring-blue-400",
 			       ]}
 		       >
-			       <Result latexMode={latexMode} />
+				   <Result />
 				   <Input />
 			       <ErrorIcon />
 			       <RadDegToggle />

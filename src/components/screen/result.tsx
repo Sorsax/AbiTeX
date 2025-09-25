@@ -1,22 +1,14 @@
 import { useCalculator } from "#/state";
 import { formatResult } from "#/utils/format-result";
 
-import katex from "katex";
 
-export default function Result({ latexMode }: { latexMode: boolean }) {
+export default function Result() {
        const { buffer, memory } = useCalculator();
 
        const shouldShowOutput = !buffer.isErr && !buffer.isDirty;
        const formattedOutput = formatResult(memory.ans);
 
        let outputContent: JSX.Element | string = formattedOutput;
-       if (latexMode && shouldShowOutput && buffer.value) {
-	       try {
-		       outputContent = <span dangerouslySetInnerHTML={{ __html: katex.renderToString(buffer.value, { throwOnError: false }) }} />;
-	       } catch {
-		       outputContent = formattedOutput;
-	       }
-       }
 
        return (
 	       <div
